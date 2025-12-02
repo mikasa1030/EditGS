@@ -37,6 +37,108 @@ def binary_cross_entropy_loss(network_output, gt):
     loss = F.binary_cross_entropy(network_output, gt)
     return loss
 
+# 全局和局部的深度MSE损失
+def normalize(input, mean=None, std=None, mask=None):
+    if mask is not None:
+        # Only compute mean/std on valid pixels if not provided
+        if mean is None:
+            # Sum over dim=1 (pixels in patch)
+            # input shape: (B, PatchSize*PatchSize) or similar
+            # mask shape: (B, PatchSize*PatchSize)
+            valid_count = mask.sum(dim=1, keepdim=True).clamp(min=1.0)
+            input_mean = (input * mask).sum(dim=1, keepdim=True) / valid_count
+        else:
+            input_mean = mean
+            
+        if std is None:
+            # Standard deviation calculation with mask
+            variance = ((input - input_mean) ** 2 * mask).sum(dim=1, keepdim=True) / valid_count
+            input_std = torch.sqrt(variance)
+        else:
+            input_std = std
+            
+        # Avoid division by zero or very small numbers
+        # Calculate global std from masked input for stability term
+        global_valid_mask = mask.bool()
+        if global_valid_mask.any():
+            global_std = torch.std(input[global_valid_mask])
+        else:
+            global_std = torch.tensor(1.0, device=input.device)
+            
+        return (input - input_mean) / (input_std + 1e-2 * global_std) * mask
+    else:
+        input_mean = torch.mean(input, dim=1, keepdim=True) if mean is None else mean
+        input_std = torch.std(input, dim=1, keepdim=True) if std is None else std
+        return (input - input_mean) / (input_std + 1e-2*torch.std(input.reshape(-1)))
+
+
+def margin_l2_loss(network_output, gt, margin, return_mask=False, mask=None):
+    if mask is not None:
+        # Only consider loss where mask is 1
+        diff = (network_output - gt) * mask
+        loss_mask = diff.abs() > margin
+        # Combine with input mask
+        final_mask = loss_mask & (mask > 0.5)
+        
+        if not return_mask:
+            if final_mask.sum() > 0:
+                return (diff[final_mask] ** 2).mean()
+            else:
+                return torch.tensor(0.0, device=network_output.device, requires_grad=True)
+        else:
+            if final_mask.sum() > 0:
+                return (diff[final_mask] ** 2).mean(), final_mask
+            else:
+                return torch.tensor(0.0, device=network_output.device, requires_grad=True), final_mask
+    else:
+        mask = (network_output - gt).abs() > margin
+        if not return_mask:
+            return ((network_output - gt)[mask] ** 2).mean()
+        else:
+            return ((network_output - gt)[mask] ** 2).mean(), mask
+
+def patchify(input, patch_size):
+    patches = F.unfold(input, kernel_size=patch_size, stride=patch_size).permute(0,2,1).view(-1, 1*patch_size*patch_size)
+    return patches
+
+def patch_norm_mse_loss(input, target, patch_size, margin, return_mask=False, mask=None):
+    if mask is not None:
+        mask_patches = patchify(mask, patch_size)
+        # Binarize mask patches (if any pixel in patch is invalid, how to handle? 
+        # Usually we want pixel-wise masking or patch-wise. 
+        # Here we assume mask is passed into normalize to handle per-pixel normalization within patch)
+        input_patches = normalize(patchify(input, patch_size), mask=mask_patches)
+        target_patches = normalize(patchify(target, patch_size), mask=mask_patches)
+        return margin_l2_loss(input_patches, target_patches, margin, return_mask, mask=mask_patches)
+    else:
+        input_patches = normalize(patchify(input, patch_size))
+        target_patches = normalize(patchify(target, patch_size))
+        return margin_l2_loss(input_patches, target_patches, margin, return_mask)
+
+def patch_norm_mse_loss_global(input, target, patch_size, margin, return_mask=False, mask=None):
+    if mask is not None:
+        mask_patches = patchify(mask, patch_size)
+        
+        # Calculate global std using mask
+        valid_mask_bool = mask.bool()
+        if valid_mask_bool.any():
+            input_global_std = input[valid_mask_bool].std().detach()
+            target_global_std = target[valid_mask_bool].std().detach()
+        else:
+            input_global_std = torch.tensor(1.0, device=input.device)
+            target_global_std = torch.tensor(1.0, device=target.device)
+            
+        input_patches = normalize(patchify(input, patch_size), std=input_global_std, mask=mask_patches)
+        target_patches = normalize(patchify(target, patch_size), std=target_global_std, mask=mask_patches)
+        return margin_l2_loss(input_patches, target_patches, margin, return_mask, mask=mask_patches)
+    else:
+        input_patches = normalize(patchify(input, patch_size), std = input.std().detach())
+        target_patches = normalize(patchify(target, patch_size), std = target.std().detach())
+        return margin_l2_loss(input_patches, target_patches, margin, return_mask)
+
+
+
+
 def reduction_batch_based(image_loss, M):
     # average of all valid pixels of the batch
 

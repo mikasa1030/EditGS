@@ -24,7 +24,7 @@ from PIL import Image
 import torchvision.transforms.functional as tf
 import lpips
 from random import randint
-from utils.loss_utils import l1_loss, ssim, ScaleAndShiftLoss, l1_loss_masked, ssim_masked, l2_loss, my_ssim, binary_cross_entropy_loss
+from utils.loss_utils import l1_loss, ssim, ScaleAndShiftLoss, l1_loss_masked, ssim_masked, l2_loss, my_ssim, binary_cross_entropy_loss,patch_norm_mse_loss_global,patch_norm_mse_loss
 from gaussian_renderer import prefilter_voxel, render, network_gui, prefilter_position2D
 import sys
 from scene import Scene, GaussianModel
@@ -386,7 +386,7 @@ def training(dataset, opt, pipe, dataset_name, testing_iterations, saving_iterat
     ema_loss_for_log = 0.0
     progress_bar = tqdm(range(first_iter, opt.iterations), desc="Training progress")
     first_iter += 1
-
+    patch_range = [5, 17]
     torch.autograd.set_detect_anomaly(True)
     for iteration in range(first_iter, opt.iterations + 1):        
         # network gui not available in scaffold-gs yet
@@ -547,31 +547,19 @@ def training(dataset, opt, pipe, dataset_name, testing_iterations, saving_iterat
         # Depth loss
         if opt.refer_depth_lr > 0 and gt_image_name == ref_name:
             depth = render_pkg["render_depth"]
-            valid_mask = 1.0-gt_mask 
-            scale, shift = compute_scale_and_shift(depth, midas_depth, valid_mask)
-            scale = torch.abs(scale) # for excluding negative scale 
-            aligned_depth = scale.view(-1, 1, 1) * depth + shift.view(-1, 1, 1)
-            loss += opt.refer_depth_lr * l1_loss(aligned_depth, midas_depth)
-            if opt.refer_depth_lr_fg > opt.refer_depth_lr:
-                fg_mask = get_random_mask(gt_mask[0], enlarge_ratio=1.5, small_ratio=0.8, max_h=h, max_w=w)
-                loss += (opt.refer_depth_lr_fg - opt.refer_depth_lr) * l1_loss_masked(aligned_depth, midas_depth, fg_mask)
-            for scale in range(4):
-                step = pow(2, scale)
-                loss += 0.5 * opt.refer_depth_lr_smooth * gradient_loss(aligned_depth[:,::step,::step], midas_depth[:,::step,::step], torch.ones_like(gt_mask)[:,::step,::step])
+            loss_depth_local = patch_norm_mse_loss(depth, midas_depth, randint(patch_range[0], patch_range[1]),0.2)
+            loss += 0.1 * loss_depth_local
+            loss_depth_global = patch_norm_mse_loss_global(depth, midas_depth, randint(patch_range[0], patch_range[1]),0.2)
+            loss += 1 * loss_depth_global
 
         # 2.2 depth loss from other view
         if opt.other_depth_lr > 0 and gt_image_name != ref_name:
             depth = render_pkg["render_depth"]
             valid_mask = (1.0-gt_mask) 
-            scale, shift = compute_scale_and_shift(depth, midas_depth, valid_mask)
-            scale = torch.abs(scale) # modi here
-            aligned_depth = scale.view(-1, 1, 1) * depth + shift.view(-1, 1, 1)
-            loss += opt.other_depth_lr * l1_loss_masked(aligned_depth, midas_depth, valid_mask)
-
-            for scale in range(4):
-                step = pow(2, scale)
-                # loss += 0.5 * opt.other_depth_lr * gradient_loss(aligned_depth[:,::step,::step], midas_depth[:,::step,::step], (valid_mask)[:,::step,::step])
-                loss += 0.5 * opt.other_depth_lr_smooth * gradient_loss(aligned_depth[:,::step,::step], midas_depth[:,::step,::step], (valid_mask)[:,::step,::step])
+            loss_depth_local = patch_norm_mse_loss(depth, midas_depth, randint(patch_range[0], patch_range[1]), 0.2, mask=valid_mask)
+            loss += 0.1 * loss_depth_local
+            loss_depth_global = patch_norm_mse_loss_global(depth, midas_depth, randint(patch_range[0], patch_range[1]), 0.2, mask=valid_mask)
+            loss += 1 * loss_depth_global
         
         loss.backward(retain_graph=True) # 200 
 

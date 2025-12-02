@@ -1,0 +1,116 @@
+Setting up [LPIPS] perceptual loss: trunk [vgg], v[0.1], spatial [off]
+Loading model from: /root/miniconda3/envs/gscream/lib/python3.7/site-packages/lpips/weights/v0.1/vgg.pth
+Setting up [LPIPS] perceptual loss: trunk [vgg], v[0.1], spatial [on]
+Loading model from: /root/miniconda3/envs/gscream/lib/python3.7/site-packages/lpips/weights/v0.1/vgg.pth
+not found tf board
+Output folder: outputs/spinnerf_datasetv1/7/gscream/ [02/12 04:06:26]
+Tensorboard not available: not logging progress [02/12 04:06:26]
+source path:  /disk3/lqk/EditGS/GScream-main/data/spinnerf_dataset_processed/7 [02/12 04:06:26]
+Reading cameras  /disk3/lqk/EditGS/GScream-main/data/spinnerf_dataset_processed/7/images [02/12 04:06:27]
+readColmapCameras: load_norm  True [02/12 04:06:27]
+readColmapCameras: load_midas  False [02/12 04:06:27]
+Reading camera 1/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 2/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 3/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 4/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 5/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 6/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 7/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 8/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 9/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 10/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 11/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 12/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 13/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 14/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 15/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 16/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 17/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 18/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 19/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 20/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 21/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 22/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 23/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 24/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 25/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 26/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 27/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 28/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 29/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 30/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 31/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 32/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 33/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 34/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 35/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 36/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 37/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 38/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 39/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 40/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 41/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 42/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 43/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 44/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 45/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 46/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 47/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 48/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 49/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 50/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 51/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 52/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 53/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 54/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 55/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 56/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 57/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 58/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 59/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 60/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 61/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 62/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 63/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:27]
+Reading camera 64/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 65/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 66/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 67/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 68/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 69/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 70/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 71/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 72/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 73/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 74/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 75/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 76/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 77/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 78/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 79/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 80/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 81/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 82/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 83/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 84/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 85/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 86/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 87/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 88/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 89/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 90/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 91/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 92/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 93/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 94/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 95/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 96/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 97/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 98/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 99/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+Reading camera 100/100 intr.model:  SIMPLE_RADIAL [02/12 04:06:28]
+ [02/12 04:06:28]
+self.spin, self.eval:  True True [02/12 04:06:28]
+Using fetchPly_modi.  ./data/spinnerf_dataset_processed/7/sparse/0/points3D.ply [02/12 04:06:28]
+Finishing fetchPly_modi.  ./data/spinnerf_dataset_processed/7/sparse/0/points3D.ply [02/12 04:06:28]
+Loading Training Cameras [02/12 04:06:28]

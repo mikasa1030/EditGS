@@ -11,7 +11,7 @@ voxel_size=0.005
 update_init_factor=16
 os.system("ulimit -n 4096")
 
-for nn in ["3", "4", "7", "9", "10", "12", "book", "trash"]: #"1", "2", 
+for nn in ["1", "2", "3", "4", "7", "9", "10", "12", "book", "trash"]: #
 
     ref_image_path = os.path.join(refs_root, [i for i in sorted(os.listdir(refs_root)) if i.startswith(nn+'_out') and i.endswith('png')][0])
     print(ref_image_path)
@@ -31,7 +31,7 @@ for nn in ["3", "4", "7", "9", "10", "12", "book", "trash"]: #"1", "2",
         --update_init_factor {update_init_factor} \
         --iterations 30_000 \
         --port 10001 \
-        -m outputs/spinnerf_dataset/{nn}/{task_name}/ \
+        -m outputs/spinnerf_datasetv1/{nn}/{task_name}/ \
         --is_spin \
         --images {image_root} \
         --specified_ply_path ./data/spinnerf_dataset_processed/{nn}/sparse/0/points3D.ply \
