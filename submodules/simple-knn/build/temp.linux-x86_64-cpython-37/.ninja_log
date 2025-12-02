@@ -5,3 +5,6 @@
 72	19569	1727827484944848096	/export/ywangom/research/nerf/gaussian_splatting/GScream/submodules/simple-knn/build/temp.linux-x86_64-cpython-37/simple_knn.o	fab2c383aeea73be
 72	103196	1727827568375711047	/export/ywangom/research/nerf/gaussian_splatting/GScream/submodules/simple-knn/build/temp.linux-x86_64-cpython-37/ext.o	590d75f04334a464
 72	150313	1727827615679633342	/export/ywangom/research/nerf/gaussian_splatting/GScream/submodules/simple-knn/build/temp.linux-x86_64-cpython-37/spatial.o	141cdc2e4f3698d7
+17	13913	1764430963162478872	/disk3/lqk/EditGS/GScream-main/submodules/simple-knn/build/temp.linux-x86_64-cpython-37/simple_knn.o	8d6729e933770806
+16	24515	1764430973746376108	/disk3/lqk/EditGS/GScream-main/submodules/simple-knn/build/temp.linux-x86_64-cpython-37/ext.o	2e669e68daea6016
+18	63665	1764431012913996062	/disk3/lqk/EditGS/GScream-main/submodules/simple-knn/build/temp.linux-x86_64-cpython-37/spatial.o	926e536959bd0a84

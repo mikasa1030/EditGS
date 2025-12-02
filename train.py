@@ -345,6 +345,7 @@ def training(dataset, opt, pipe, dataset_name, testing_iterations, saving_iterat
 
     ### load ref
     all_image_names = [i for i in sorted(os.listdir(dataset.source_path+'/images_4')) if i.endswith('png')]
+    import ipdb;ipdb.set_trace()
     ref_name = all_image_names[40+29][:-4] # for spinnerf dataset
     viewpoint_stack_first = scene.getTrainCameras().copy()
     viewpoint_ref = [vp for vp in viewpoint_stack_first if vp.image_name == ref_name]
@@ -1042,10 +1043,10 @@ if __name__ == "__main__":
         os.environ['CUDA_VISIBLE_DEVICES'] = str(args.gpu)
         os.system("echo $CUDA_VISIBLE_DEVICES")
         logger.info(f'using GPU {args.gpu}')
-    try:
-        saveRuntimeCode(os.path.join(args.model_path, 'backup'))
-    except:
-        logger.info(f'save code failed~')
+    # try:
+    #     saveRuntimeCode(os.path.join(args.model_path, 'backup'))
+    # except:
+    #     logger.info(f'save code failed~')
         
     dataset = args.source_path.split('/')[-1]
     exp_name = args.model_path.split('/')[-2]

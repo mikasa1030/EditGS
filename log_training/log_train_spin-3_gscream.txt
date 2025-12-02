@@ -1,0 +1,12 @@
+> [0;32m/disk3/lqk/EditGS/GScream-main/train.py[0m(12)[0;36m<module>[0;34m()[0m
+[0;32m     11 [0;31m[0;34m[0m[0m
+[0m[0;32m---> 12 [0;31m[0;32mimport[0m [0mos[0m[0;34m[0m[0;34m[0m[0m
+[0m[0;32m     13 [0;31m[0;32mimport[0m [0mnumpy[0m [0;32mas[0m [0mnp[0m[0;34m[0m[0;34m[0m[0m
+[0m
+ipdb> --KeyboardInterrupt--
+ipdb> --KeyboardInterrupt--
+ipdb> ipdb> ipdb> ipdb> ipdb> ipdb> ipdb> ipdb> --KeyboardInterrupt--
+ipdb> --KeyboardInterrupt--
+ipdb> --KeyboardInterrupt--
+ipdb> ipdb> --KeyboardInterrupt--
+ipdb> ipdb> 

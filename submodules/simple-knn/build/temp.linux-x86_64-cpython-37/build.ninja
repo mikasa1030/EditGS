@@ -1,11 +1,11 @@
 ninja_required_version = 1.3
-cxx = g++
-nvcc = /usr/local/cuda-11.7/bin/nvcc
+cxx = c++
+nvcc = /usr/local/cuda/bin/nvcc
 
-cflags = -Wsign-compare -DNDEBUG -g -fwrapv -O3 -Wall -Wstrict-prototypes -fPIC -I/export/ywangom/anaconda3/envs/gscream/lib/python3.7/site-packages/torch/include -I/export/ywangom/anaconda3/envs/gscream/lib/python3.7/site-packages/torch/include/torch/csrc/api/include -I/export/ywangom/anaconda3/envs/gscream/lib/python3.7/site-packages/torch/include/TH -I/export/ywangom/anaconda3/envs/gscream/lib/python3.7/site-packages/torch/include/THC -I/usr/local/cuda-11.7/include -I/export/ywangom/anaconda3/envs/gscream/include/python3.7m -c
+cflags = -pthread -B /root/miniconda3/envs/gscream/compiler_compat -Wl,--sysroot=/ -Wsign-compare -DNDEBUG -g -fwrapv -O3 -Wall -Wstrict-prototypes -fPIC -I/root/miniconda3/envs/gscream/lib/python3.7/site-packages/torch/include -I/root/miniconda3/envs/gscream/lib/python3.7/site-packages/torch/include/torch/csrc/api/include -I/root/miniconda3/envs/gscream/lib/python3.7/site-packages/torch/include/TH -I/root/miniconda3/envs/gscream/lib/python3.7/site-packages/torch/include/THC -I/usr/local/cuda/include -I/root/miniconda3/envs/gscream/include/python3.7m -c
 post_cflags = -DTORCH_API_INCLUDE_EXTENSION_H '-DPYBIND11_COMPILER_TYPE="_gcc"' '-DPYBIND11_STDLIB="_libstdcpp"' '-DPYBIND11_BUILD_ABI="_cxxabi1011"' -DTORCH_EXTENSION_NAME=_C -D_GLIBCXX_USE_CXX11_ABI=0 -std=c++14
-cuda_cflags = -I/export/ywangom/anaconda3/envs/gscream/lib/python3.7/site-packages/torch/include -I/export/ywangom/anaconda3/envs/gscream/lib/python3.7/site-packages/torch/include/torch/csrc/api/include -I/export/ywangom/anaconda3/envs/gscream/lib/python3.7/site-packages/torch/include/TH -I/export/ywangom/anaconda3/envs/gscream/lib/python3.7/site-packages/torch/include/THC -I/usr/local/cuda-11.7/include -I/export/ywangom/anaconda3/envs/gscream/include/python3.7m -c
-cuda_post_cflags = -D__CUDA_NO_HALF_OPERATORS__ -D__CUDA_NO_HALF_CONVERSIONS__ -D__CUDA_NO_BFLOAT16_CONVERSIONS__ -D__CUDA_NO_HALF2_OPERATORS__ --expt-relaxed-constexpr --compiler-options ''"'"'-fPIC'"'"'' -DTORCH_API_INCLUDE_EXTENSION_H '-DPYBIND11_COMPILER_TYPE="_gcc"' '-DPYBIND11_STDLIB="_libstdcpp"' '-DPYBIND11_BUILD_ABI="_cxxabi1011"' -DTORCH_EXTENSION_NAME=_C -D_GLIBCXX_USE_CXX11_ABI=0 -gencode=arch=compute_86,code=compute_86 -gencode=arch=compute_86,code=sm_86 -ccbin gcc -std=c++14
+cuda_cflags = -I/root/miniconda3/envs/gscream/lib/python3.7/site-packages/torch/include -I/root/miniconda3/envs/gscream/lib/python3.7/site-packages/torch/include/torch/csrc/api/include -I/root/miniconda3/envs/gscream/lib/python3.7/site-packages/torch/include/TH -I/root/miniconda3/envs/gscream/lib/python3.7/site-packages/torch/include/THC -I/usr/local/cuda/include -I/root/miniconda3/envs/gscream/include/python3.7m -c
+cuda_post_cflags = -D__CUDA_NO_HALF_OPERATORS__ -D__CUDA_NO_HALF_CONVERSIONS__ -D__CUDA_NO_BFLOAT16_CONVERSIONS__ -D__CUDA_NO_HALF2_OPERATORS__ --expt-relaxed-constexpr --compiler-options ''"'"'-fPIC'"'"'' -DTORCH_API_INCLUDE_EXTENSION_H '-DPYBIND11_COMPILER_TYPE="_gcc"' '-DPYBIND11_STDLIB="_libstdcpp"' '-DPYBIND11_BUILD_ABI="_cxxabi1011"' -DTORCH_EXTENSION_NAME=_C -D_GLIBCXX_USE_CXX11_ABI=0 -gencode=arch=compute_86,code=compute_86 -gencode=arch=compute_86,code=sm_86 -std=c++14
 ldflags = 
 
 rule compile
@@ -20,9 +20,9 @@ rule cuda_compile
 
 
 
-build /export/ywangom/research/nerf/gaussian_splatting/GScream/submodules/simple-knn/build/temp.linux-x86_64-cpython-37/ext.o: compile /export/ywangom/research/nerf/gaussian_splatting/GScream/submodules/simple-knn/ext.cpp
-build /export/ywangom/research/nerf/gaussian_splatting/GScream/submodules/simple-knn/build/temp.linux-x86_64-cpython-37/simple_knn.o: cuda_compile /export/ywangom/research/nerf/gaussian_splatting/GScream/submodules/simple-knn/simple_knn.cu
-build /export/ywangom/research/nerf/gaussian_splatting/GScream/submodules/simple-knn/build/temp.linux-x86_64-cpython-37/spatial.o: cuda_compile /export/ywangom/research/nerf/gaussian_splatting/GScream/submodules/simple-knn/spatial.cu
+build /disk3/lqk/EditGS/GScream-main/submodules/simple-knn/build/temp.linux-x86_64-cpython-37/ext.o: compile /disk3/lqk/EditGS/GScream-main/submodules/simple-knn/ext.cpp
+build /disk3/lqk/EditGS/GScream-main/submodules/simple-knn/build/temp.linux-x86_64-cpython-37/simple_knn.o: cuda_compile /disk3/lqk/EditGS/GScream-main/submodules/simple-knn/simple_knn.cu
+build /disk3/lqk/EditGS/GScream-main/submodules/simple-knn/build/temp.linux-x86_64-cpython-37/spatial.o: cuda_compile /disk3/lqk/EditGS/GScream-main/submodules/simple-knn/spatial.cu
 
 
 
