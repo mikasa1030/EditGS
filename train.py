@@ -263,7 +263,8 @@ def depth2pcd_fromplane(depth2d, c2w, K, h, w):
     z_camera = depth2d
     xyz1_camera = torch.concat([x_camera, y_camera, z_camera, torch.ones_like(x_camera)], 0).reshape(4,h*w) # 
     # print(c2w.shape, xyz1_camera.shape)
-    xyz_fine = torch.matmul(c2w, xyz1_camera).reshape(1,3,h,w) # (1 3 h w)
+    xyz_fine = torch.matmul(c2w, xyz1_camera) # (4, h*w)
+    xyz_fine = xyz_fine[:3, :].reshape(1,3,h,w) # (1 3 h w)
     return xyz_fine
 
 
