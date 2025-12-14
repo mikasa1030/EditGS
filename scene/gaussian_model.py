@@ -93,6 +93,8 @@ class GaussianModel:
         self.offset_denom = torch.empty(0)
 
         self.anchor_demon = torch.empty(0)
+        
+        self.anchor_type = torch.empty(0)
                 
         self.optimizer = None
         self.optimizer_d = None
@@ -343,7 +345,37 @@ class GaussianModel:
         self._opacity = nn.Parameter(opacities.requires_grad_(False))
         self._uncertainty = nn.Parameter(uncertainties.requires_grad_(False))
         self.max_radii2D = torch.zeros((self.get_anchor.shape[0]), device="cuda")
+        self.anchor_type = torch.zeros((self.get_anchor.shape[0]), dtype=torch.int, device="cuda")
 
+
+    def add_anchor_points(self, points, type_id=1):
+        fused_point_cloud = points.float().cuda()
+        offsets = torch.zeros((fused_point_cloud.shape[0], self.n_offsets, 3)).float().cuda()
+        anchors_feat = torch.zeros((fused_point_cloud.shape[0], self.feat_dim)).float().cuda()
+        
+        dist2 = torch.clamp_min(distCUDA2(fused_point_cloud).float().cuda(), 0.0000001)
+        scales = torch.log(torch.sqrt(dist2))[...,None].repeat(1, 6)
+        
+        rots = torch.zeros((fused_point_cloud.shape[0], 4), device="cuda")
+        rots[:, 0] = 1
+
+        opacities = inverse_sigmoid(0.1 * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda"))
+        uncertainties = inverse_sigmoid(0.1 * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda"))
+
+        new_anchor_type = torch.full((fused_point_cloud.shape[0],), type_id, dtype=torch.int, device="cuda")
+
+        self._anchor = nn.Parameter(torch.cat([self._anchor, fused_point_cloud], dim=0).requires_grad_(True))
+        self._offset = nn.Parameter(torch.cat([self._offset, offsets], dim=0).requires_grad_(True))
+        self._anchor_feat = nn.Parameter(torch.cat([self._anchor_feat, anchors_feat], dim=0).requires_grad_(True))
+        self._scaling = nn.Parameter(torch.cat([self._scaling, scales], dim=0).requires_grad_(True))
+        self._rotation = nn.Parameter(torch.cat([self._rotation, rots], dim=0).requires_grad_(False))
+        self._opacity = nn.Parameter(torch.cat([self._opacity, opacities], dim=0).requires_grad_(False))
+        self._uncertainty = nn.Parameter(torch.cat([self._uncertainty, uncertainties], dim=0).requires_grad_(False))
+        
+        self.max_radii2D = torch.zeros((self.get_anchor.shape[0]), device="cuda")
+        self.anchor_type = torch.cat([self.anchor_type, new_anchor_type], dim=0)
+        
+        print(f"Added {fused_point_cloud.shape[0]} anchor points of type {type_id}. Total: {self.get_anchor.shape[0]}")
 
     def training_setup(self, training_args):
         self.percent_dense = training_args.percent_dense
@@ -546,6 +578,84 @@ class GaussianModel:
         self._anchor_feat.retain_grad()
 
         return 
+
+
+    def run_custom_attention(self, patch_in_mask, patch_out_mask, ema=1.0, is_ref=True):
+        self._anchor_feat = self._anchor_feat.detach()
+        
+        # Convert masks to indices if needed
+        if patch_in_mask.dtype == torch.bool:
+            patch_in_indices = torch.nonzero(patch_in_mask).squeeze()
+        else:
+            patch_in_indices = patch_in_mask
+
+        if patch_out_mask.dtype == torch.bool:
+            patch_out_indices = torch.nonzero(patch_out_mask).squeeze()
+        else:
+            patch_out_indices = patch_out_mask
+
+        # Ensure indices are 1D and valid
+        if patch_in_indices.ndim == 0: patch_in_indices = patch_in_indices.unsqueeze(0)
+        if patch_out_indices.ndim == 0: patch_out_indices = patch_out_indices.unsqueeze(0)
+        
+        if patch_in_indices.numel() == 0 or patch_out_indices.numel() == 0:
+            return
+
+        # Identify Marked and Unmarked in Patch
+        types_in_patch = self.anchor_type[patch_in_indices]
+        marked_mask_local = (types_in_patch == 1)
+        unmarked_mask_local = (types_in_patch != 1)
+        
+        marked_indices = patch_in_indices[marked_mask_local]
+        unmarked_indices = patch_in_indices[unmarked_mask_local]
+        
+        # Features
+        # marked_feat = self._anchor_feat[marked_indices] # (N_marked, 32)
+        # unmarked_feat = self._anchor_feat[unmarked_indices] # (N_unmarked, 32)
+        out_feat = self._anchor_feat[patch_out_indices] # (N_out, 32)
+        
+        mean_marked = None
+        
+        # Step 1: Self Attention on Marked
+        if marked_indices.numel() > 0 and hasattr(self, 'selfattn'):
+            marked_feat = self._anchor_feat[marked_indices]
+            marked_feat_in = marked_feat.unsqueeze(0) # (1, N, 32)
+            marked_feat_out, _ = self.selfattn(marked_feat_in, marked_feat_in, marked_feat_in)
+            marked_feat_out = marked_feat_out.squeeze(0) # (N, 32)
+            
+            # Update marked anchors
+            if is_ref:
+                self._anchor_feat[marked_indices] = ema * marked_feat_out + (1-ema) * self._anchor_feat[marked_indices]
+                
+            mean_marked = marked_feat_out.mean(dim=0) # (32,)
+        
+        # Step 3: Add mean to unmarked (prepare for Q)
+        if unmarked_indices.numel() > 0:
+            unmarked_feat = self._anchor_feat[unmarked_indices]
+            if mean_marked is not None:
+                unmarked_feat_for_q = unmarked_feat + mean_marked.unsqueeze(0)
+            else:
+                unmarked_feat_for_q = unmarked_feat
+                
+            # Step 4: Cross Attention
+            # Q = Unmarked (modified), Context = Patch Out
+            q_in = unmarked_feat_for_q.unsqueeze(0) # (1, N_un, 32)
+            kv_in = out_feat.unsqueeze(0) # (1, N_out, 32)
+            
+            q_mask = torch.ones((1, q_in.shape[1]), device=q_in.device).bool()
+            kv_mask = torch.ones((1, kv_in.shape[1]), device=kv_in.device).bool()
+            
+            # crossattn returns (updated_q, updated_context)
+            updated_q, updated_kv = self.crossattn(q_in, kv_in, mask=q_mask, context_mask=kv_mask)
+            
+            if is_ref:
+                # Update Unmarked anchors (Q)
+                self._anchor_feat[unmarked_indices] = ema * updated_q[0] + (1-ema) * self._anchor_feat[unmarked_indices]
+                
+            # Update Patch Out anchors (Context)
+            self._anchor_feat[patch_out_indices] = ema * updated_kv[0] + (1-ema) * self._anchor_feat[patch_out_indices]
+
+        self._anchor_feat.retain_grad()
 
 
     

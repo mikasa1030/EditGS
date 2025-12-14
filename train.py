@@ -333,19 +333,11 @@ def saveRuntimeCode(dst: str) -> None:
 def training(dataset, opt, pipe, dataset_name, testing_iterations, saving_iterations, checkpoint_iterations, checkpoint, debug_from, wandb=None, logger=None, ply_path=None):
     first_iter = 0
     tb_writer = prepare_output_and_logger(dataset)
-    gaussians = GaussianModel(dataset.feat_dim, dataset.n_offsets, dataset.voxel_size, dataset.update_depth, dataset.update_init_factor, dataset.update_hierachy_factor, dataset.use_feat_bank, opt.attn_head_num, opt.attn_head_dim, use_bidirectional_attn=True)
+    gaussians = GaussianModel(dataset.feat_dim, dataset.n_offsets, dataset.voxel_size, dataset.update_depth, dataset.update_init_factor, dataset.update_hierachy_factor, dataset.use_feat_bank, opt.attn_head_num, opt.attn_head_dim, use_bidirectional_attn=True, use_self_attn=True)
     scene = Scene(dataset, gaussians, ply_path=ply_path) # dataloader
-    gaussians.training_setup(opt)
-    if checkpoint:
-        (model_params, first_iter) = torch.load(checkpoint)
-        gaussians.restore(model_params, opt)
-
-    iter_start = torch.cuda.Event(enable_timing = True)
-    iter_end = torch.cuda.Event(enable_timing = True)
-
     ### load ref
     all_image_names = [i for i in sorted(os.listdir(dataset.source_path+'/images_4')) if i.endswith('png')]
-    import ipdb;ipdb.set_trace()
+    # import ipdb;ipdb.set_trace()
     ref_name = all_image_names[40+29][:-4] # for spinnerf dataset
     viewpoint_stack_first = scene.getTrainCameras().copy()
     viewpoint_ref = [vp for vp in viewpoint_stack_first if vp.image_name == ref_name]
@@ -379,6 +371,25 @@ def training(dataset, opt, pipe, dataset_name, testing_iterations, saving_iterat
     ])
     K = torch.from_numpy(K.astype(np.float32)).cuda()
     print('K: ', K)
+
+    # Back-project depth to anchor points
+    c2w = viewpoint_ref.world_view_transform.transpose(0, 1).inverse()
+    new_anchor_points = depth2pcd_fromplane(ref_depth[0], c2w, K, h, w) # (1, 3, h, w)
+    new_anchor_points = new_anchor_points.reshape(3, -1).transpose(0, 1) # (N, 3)
+    
+    valid_depth_mask = ref_depth[0].reshape(-1) > 0
+    new_anchor_points = new_anchor_points[valid_depth_mask]
+    
+    print(f"Back-projected {new_anchor_points.shape[0]} points from reference depth.")
+    gaussians.add_anchor_points(new_anchor_points, type_id=1)
+
+    gaussians.training_setup(opt)
+    if checkpoint:
+        (model_params, first_iter) = torch.load(checkpoint)
+        gaussians.restore(model_params, opt)
+
+    iter_start = torch.cuda.Event(enable_timing = True)
+    iter_end = torch.cuda.Event(enable_timing = True)
 
 
     #### load ref
@@ -465,54 +476,31 @@ def training(dataset, opt, pipe, dataset_name, testing_iterations, saving_iterat
                 voxel_sampled_mask = -1 * torch.ones_like(voxel_visible_mask) # -1
                 voxel_sampled_mask[valid_mask_2D] = anchor_2Dlabel_sample # -1: invalid, 0: unampled, 1: sampled
 
-                anchor_2Dlabel_fgbg = gt_mask[0].long()[position2D_y[valid_mask_2D], position2D_x[valid_mask_2D]] # (projected) anchor's 2D label
-                voxel_fgbg_mask = -1 * torch.ones_like(voxel_visible_mask) # -1
-                voxel_fgbg_mask[valid_mask_2D] = anchor_2Dlabel_fgbg # -1: invalid, 0: bg, 1: fg
-
-                # 2-category cluster 
-                fgbg_sampled = voxel_fgbg_mask[voxel_sampled_mask>0] # P 
-                anchor_sampled = gaussians.get_anchor[voxel_sampled_mask>0] # P, 3
-
-                anchor_sampled_fg_xyz = anchor_sampled[fgbg_sampled>0] # P1 x 3
-                anchor_sampled_fg_indices = torch.nonzero(fgbg_sampled>0).squeeze() # P1
-
-                anchor_sampled_bg_xyz = anchor_sampled[fgbg_sampled==0] # P2 x 3
-                anchor_sampled_bg_indices = torch.nonzero(fgbg_sampled==0).squeeze() # P2
-
-                if (anchor_sampled.shape[0] <= 11):
-                    print('anchor_sampled <= 11, %d'%num_sampled)
-                    exit()
+                # New Attention Logic: Patch-In vs Patch-Out
+                patch_in_mask = (voxel_sampled_mask == 1)
+                patch_out_mask = (voxel_sampled_mask == 0)
                 
-                if (anchor_sampled_fg_xyz.shape[0] <= 11):
-                    print('anchor_sampled <= 11, %d'%num_sampled)
-                    exit()
-                if (anchor_sampled_bg_xyz.shape[0] <= 11):
-                    print('anchor_sampled <= 11, %d'%num_sampled)
-                    exit()
+                num_in = patch_in_mask.sum()
+                num_out = patch_out_mask.sum()
+                
+                if num_in <= 10 or num_out <= 10:
+                    print(f'Not enough anchors: In={num_in}, Out={num_out}')
+                    # exit() # Don't exit, just skip
+                    cross_flag = False
+                    continue
 
-                row_indices = anchor_sampled_fg_indices
-                sampled_indices = anchor_sampled_bg_indices
+                # Subsample Patch Out (Context) to save memory/compute
+                max_out = 2000
+                if num_out > max_out:
+                    out_indices = torch.nonzero(patch_out_mask).squeeze()
+                    perm = torch.randperm(out_indices.size(0))[:max_out]
+                    selected_out_indices = out_indices[perm]
+                    
+                    patch_out_mask = torch.zeros_like(patch_out_mask)
+                    patch_out_mask[selected_out_indices] = True
 
-                if not (sampled_indices.shape[0] > 0):
-                    print('number pair <=0, %d'%sampled_indices.shape[0])
-                    exit()
-
-                min_num = min(min(sampled_indices.shape[0], row_indices.shape[0]), 2000)
-                unique_sampled_indices = sampled_indices[torch.randperm(sampled_indices.size(0))][:min_num]
-                unique_row_indices = row_indices[torch.randperm(row_indices.size(0))][:min_num]
-
-                voxel_sampled_src = torch.zeros_like(voxel_visible_mask) # P
-                voxel_used_src = torch.zeros(num_sampled).cuda().bool()
-                voxel_used_src[unique_row_indices] = True
-                voxel_sampled_src[voxel_sampled_mask>0] = voxel_used_src
-
-                voxel_sampled_dst = torch.zeros_like(voxel_visible_mask)
-                voxel_used_dst = torch.zeros(num_sampled).cuda().bool()
-                voxel_used_dst[unique_sampled_indices] = True
-                voxel_sampled_dst[voxel_sampled_mask>0] = voxel_used_dst # P 
-
-                # 3. choose
-                gaussians.run_crossattn(voxel_sampled_src, voxel_sampled_dst, pe=(opt.enable_pe>0), ema=opt.crossattn_feat_update_ema, is_ref=(gt_image_name == ref_name))
+                gaussians.run_custom_attention(patch_in_mask, patch_out_mask, ema=opt.crossattn_feat_update_ema, is_ref=(gt_image_name == ref_name))
+                cross_flag = True
                 cross_flag = True
 
             except:
