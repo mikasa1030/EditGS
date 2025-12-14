@@ -53,7 +53,7 @@ def normalize(input, mean=None, std=None, mask=None):
         if std is None:
             # Standard deviation calculation with mask
             variance = ((input - input_mean) ** 2 * mask).sum(dim=1, keepdim=True) / valid_count
-            input_std = torch.sqrt(variance)
+            input_std = torch.sqrt(variance + 1e-8)
         else:
             input_std = std
             
