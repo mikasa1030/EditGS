@@ -98,6 +98,8 @@ def margin_l2_loss(network_output, gt, margin, return_mask=False, mask=None):
             return ((network_output - gt)[mask] ** 2).mean(), mask
 
 def patchify(input, patch_size):
+    if input.dim() == 3:
+        input = input.unsqueeze(0)
     patches = F.unfold(input, kernel_size=patch_size, stride=patch_size).permute(0,2,1).view(-1, 1*patch_size*patch_size)
     return patches
 
