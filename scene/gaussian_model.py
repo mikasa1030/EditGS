@@ -364,13 +364,13 @@ class GaussianModel:
 
         new_anchor_type = torch.full((fused_point_cloud.shape[0],), type_id, dtype=torch.int, device="cuda")
 
-        self._anchor = nn.Parameter(torch.cat([self._anchor, fused_point_cloud], dim=0).requires_grad_(True))
-        self._offset = nn.Parameter(torch.cat([self._offset, offsets], dim=0).requires_grad_(True))
-        self._anchor_feat = nn.Parameter(torch.cat([self._anchor_feat, anchors_feat], dim=0).requires_grad_(True))
-        self._scaling = nn.Parameter(torch.cat([self._scaling, scales], dim=0).requires_grad_(True))
-        self._rotation = nn.Parameter(torch.cat([self._rotation, rots], dim=0).requires_grad_(False))
-        self._opacity = nn.Parameter(torch.cat([self._opacity, opacities], dim=0).requires_grad_(False))
-        self._uncertainty = nn.Parameter(torch.cat([self._uncertainty, uncertainties], dim=0).requires_grad_(False))
+        self._anchor = nn.Parameter(torch.cat([self._anchor, fused_point_cloud], dim=0).detach().requires_grad_(True))
+        self._offset = nn.Parameter(torch.cat([self._offset, offsets], dim=0).detach().requires_grad_(True))
+        self._anchor_feat = nn.Parameter(torch.cat([self._anchor_feat, anchors_feat], dim=0).detach().requires_grad_(True))
+        self._scaling = nn.Parameter(torch.cat([self._scaling, scales], dim=0).detach().requires_grad_(True))
+        self._rotation = nn.Parameter(torch.cat([self._rotation, rots], dim=0).detach().requires_grad_(False))
+        self._opacity = nn.Parameter(torch.cat([self._opacity, opacities], dim=0).detach().requires_grad_(False))
+        self._uncertainty = nn.Parameter(torch.cat([self._uncertainty, uncertainties], dim=0).detach().requires_grad_(False))
         
         self.max_radii2D = torch.zeros((self.get_anchor.shape[0]), device="cuda")
         self.anchor_type = torch.cat([self.anchor_type, new_anchor_type], dim=0)
