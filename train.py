@@ -458,38 +458,33 @@ def training(dataset, opt, pipe, dataset_name, testing_iterations, saving_iterat
             or ((opt.enable_crossattn_otherview > 0) and (gt_image_name != ref_name) and iteration > opt.start_crossattn_from):
 
             try:
-            # if True:
-                if opt.enable_edge_samping > 0:
-                    min_y, max_y, min_x, max_x = sample_patch_in_mask_region(gt_mask=gt_mask[0], patch_size=256, small_ratio=opt.sampling_2D_small_ratio, max_h=h, max_w=w)
-                else:
-                    print('No sampling method. ')
+                # New Attention Logic: FG (Patch-In) vs BG (Patch-Out) based on GT Mask
                 
-                sampled_mask_2D = torch.zeros_like(gt_mask[0]).long()
-                sampled_mask_2D[min_y:max_y, min_x:max_x] = 1.0 
-
-                anchor_2Dlabel_sample = sampled_mask_2D[position2D_y[valid_mask_2D], position2D_x[valid_mask_2D]] # (projected) anchor's 2D label
-                num_sampled = anchor_2Dlabel_sample.sum()
-                if not (num_sampled > 0):
-                    print('num_sampled <= 0, %d'%num_sampled)
-                    exit()
-
-                voxel_sampled_mask = -1 * torch.ones_like(voxel_visible_mask) # -1
-                voxel_sampled_mask[valid_mask_2D] = anchor_2Dlabel_sample # -1: invalid, 0: unampled, 1: sampled
-
-                # New Attention Logic: Patch-In vs Patch-Out
+                # Get 2D label for each anchor (1 for FG, 0 for BG)
+                # anchor_2Dlabel: (N_visible,)
+                anchor_2Dlabel = gt_mask[0].long()[position2D_y[valid_mask_2D], position2D_x[valid_mask_2D]]
+                
+                # Create global masks
+                # voxel_sampled_mask logic:
+                # Initialize with -1 (invalid)
+                voxel_sampled_mask = -1 * torch.ones_like(voxel_visible_mask, dtype=torch.long)
+                # Assign 0/1 labels to valid visible anchors
+                voxel_sampled_mask[valid_mask_2D] = anchor_2Dlabel
+                
+                # Patch In = Foreground (1)
                 patch_in_mask = (voxel_sampled_mask == 1)
+                # Patch Out = Background (0)
                 patch_out_mask = (voxel_sampled_mask == 0)
                 
                 num_in = patch_in_mask.sum()
                 num_out = patch_out_mask.sum()
                 
                 if num_in <= 10 or num_out <= 10:
-                    print(f'Not enough anchors: In={num_in}, Out={num_out}')
-                    # exit() # Don't exit, just skip
+                    # print(f'Not enough anchors: In={num_in}, Out={num_out}')
                     cross_flag = False
                     continue
 
-                # Subsample Patch Out (Context) to save memory/compute
+                # Subsample Patch Out (Context/BG) to save memory/compute
                 max_out = 2000
                 if num_out > max_out:
                     out_indices = torch.nonzero(patch_out_mask).squeeze()
@@ -500,7 +495,6 @@ def training(dataset, opt, pipe, dataset_name, testing_iterations, saving_iterat
                     patch_out_mask[selected_out_indices] = True
 
                 gaussians.run_custom_attention(patch_in_mask, patch_out_mask, ema=opt.crossattn_feat_update_ema, is_ref=(gt_image_name == ref_name))
-                cross_flag = True
                 cross_flag = True
 
             except:
